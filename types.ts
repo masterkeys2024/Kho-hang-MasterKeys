@@ -1,3 +1,8 @@
+// src/types.ts
+
+// ----------------------
+// Phân quyền & vai trò
+// ----------------------
 export enum Role {
   QUAN_LY = "Quản lý",
   THU_KHO = "Thủ kho",
@@ -6,21 +11,26 @@ export enum Role {
   VIEWER = "Viewer"
 }
 
+// ----------------------
+// Tài khoản người dùng
+// ----------------------
 export interface User {
-  id: number;
+  id: string; // UUID của Supabase (chuỗi)
   name: string;
   email: string;
   role: Role;
-  password?: string;
 }
 
 export interface AuthContextType {
   user: User | null;
   login: (email: string, pass: string) => Promise<User>;
-  logout: () => void;
+  logout: () => Promise<void>; // async logout với Supabase
   hasPermission: (roles: Role[]) => boolean;
 }
 
+// ----------------------
+// Danh mục kho, sản phẩm
+// ----------------------
 export interface Warehouse {
   id: number;
   code: string;
@@ -57,14 +67,16 @@ export interface ProductVariant {
   thresholds: Record<number, { min: number; max: number }>; // warehouseId -> {min, max}
   purchasePrice?: number; // Giá nhập
   sellingPrice?: number; // Giá bán
-  // FIX: Added optional totalStock property to align with data from API and fix type error in Products.tsx
-  totalStock?: number;
+  totalStock?: number; // Tổng tồn kho
 }
 
 export type ProductWithStock = Product & {
-    variants: (ProductVariant & { totalStock: number })[];
+  variants: (ProductVariant & { totalStock: number })[];
 };
 
+// ----------------------
+// Giao dịch tồn kho
+// ----------------------
 export interface InventoryBalance {
   warehouseId: number;
   variantId: number;
@@ -82,7 +94,7 @@ export const TransactionTypeVietnamese: Record<TransactionType, string> = {
   [TransactionType.IMPORT]: "Phiếu Nhập",
   [TransactionType.EXPORT]: "Phiếu Xuất",
   [TransactionType.TRANSFER]: "Điều chuyển",
-  [TransactionType.ADJUST]: "Kiểm kê",
+  [TransactionType.ADJUST]: "Kiểm kê"
 };
 
 export enum TransactionStatus {
@@ -94,7 +106,7 @@ export enum TransactionStatus {
 export const TransactionStatusVietnamese: Record<TransactionStatus, string> = {
   [TransactionStatus.DRAFT]: "Nháp",
   [TransactionStatus.APPROVED]: "Đã duyệt",
-  [TransactionStatus.CANCELLED]: "Đã hủy",
+  [TransactionStatus.CANCELLED]: "Đã hủy"
 };
 
 export interface StockTransactionItem {
@@ -102,7 +114,6 @@ export interface StockTransactionItem {
   variantId: number;
   qty: number;
   unitCost: number;
-  // FIX: Added optional lotNumber property to align with seed data in mockApi.ts.
   lotNumber?: string;
 }
 
@@ -130,36 +141,39 @@ export interface StockTransaction {
   note?: string;
   status: TransactionStatus;
   items: StockTransactionItem[];
-  createdBy: number;
-  approvedBy?: number;
+  createdBy: string; // id Supabase (chuỗi)
+  approvedBy?: string;
 }
 
+// ----------------------
+// Cảnh báo, nhật ký, thẻ kho
+// ----------------------
 export interface Alert {
-    warehouse: Warehouse;
-    product: Product;
-    variant: ProductVariant;
-    onhandQty: number;
-    threshold: { min: number; max: number };
-    type: 'MIN' | 'MAX';
+  warehouse: Warehouse;
+  product: Product;
+  variant: ProductVariant;
+  onhandQty: number;
+  threshold: { min: number; max: number };
+  type: "MIN" | "MAX";
 }
 
 export interface AuditLog {
-    id: number;
-    actor: User;
-    action: string;
-    entityType: string;
-    entityId: number;
-    before?: object;
-    after?: object;
-    createdAt: string;
+  id: number;
+  actor: User;
+  action: string;
+  entityType: string;
+  entityId: number;
+  before?: object;
+  after?: object;
+  createdAt: string;
 }
 
 export interface StockCardEntry {
-    date: string;
-    transactionCode: string;
-    transactionType: TransactionType;
-    note: string;
-    importQty: number;
-    exportQty: number;
-    balance: number;
+  date: string;
+  transactionCode: string;
+  transactionType: TransactionType;
+  note: string;
+  importQty: number;
+  exportQty: number;
+  balance: number;
 }
