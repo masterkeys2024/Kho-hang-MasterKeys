@@ -1,0 +1,5 @@
+{
+  "name": "Hệ thống Quản lý Kho Hàng",
+  "description": "Một ứng dụng web quản lý hàng tồn kho hoàn chỉnh được xây dựng bằng React và Tailwind CSS, bao gồm quản lý sản phẩm, giao dịch nhập-xuất-tồn, báo cáo, cảnh báo và phân quyền người dùng.",
+  "requestFramePermissions": []
+}
