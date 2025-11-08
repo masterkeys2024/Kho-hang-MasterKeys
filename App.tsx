@@ -13,7 +13,7 @@ import Reports from './components/Reports';
 import Alerts from './components/Alerts';
 import Settings from './components/Settings';
 import Login from './components/Login';
-import { supabase } from './lib/supabase';
+import { supabase } from './src/lib/supabase';
 import WarehouseHub from './components/WarehouseHub';
 import StockImport from './components/StockImport';
 import StockExport from './components/StockExport';
