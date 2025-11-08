@@ -13,7 +13,7 @@ import Reports from './components/Reports';
 import Alerts from './components/Alerts';
 import Settings from './components/Settings';
 import Login from './components/Login';
-import { api } from './services/mockApi';
+import { supabase } from './lib/supabase';
 import WarehouseHub from './components/WarehouseHub';
 import StockImport from './components/StockImport';
 import StockExport from './components/StockExport';
@@ -33,37 +33,106 @@ export const useAuth = () => {
 };
 
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(() => {
-        const storedUser = localStorage.getItem('user');
-        return storedUser ? JSON.parse(storedUser) : null;
+  const [user, setUser] = useState<User | null>(() => {
+    const stored = localStorage.getItem('user');
+    return stored ? JSON.parse(stored) : null;
+  });
+
+  // Map role từ profiles.role (text) sang enum Role trong app
+  const mapRole = (roleText?: string): Role => {
+    switch ((roleText || '').toLowerCase()) {
+      case 'admin': return Role.QUAN_LY;
+      case 'ke_toan': return Role.KE_TOAN;
+      case 'ban_hang': return Role.NHAN_VIEN_BAN_HANG;
+      case 'viewer': return Role.VIEWER;
+      default: return Role.THU_KHO; // staff mặc định
+    }
+  };
+
+  // Lấy session hiện tại + lắng nghe thay đổi đăng nhập
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      const sUser = data.session?.user;
+      if (!sUser) {
+        setUser(null);
+        localStorage.removeItem('user');
+        return;
+      }
+      // lấy profile sau khi đã có session
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('full_name, role')
+        .eq('id', sUser.id)
+        .maybeSingle();
+
+      const appUser: User = {
+        name: prof?.full_name || (sUser.email?.split('@')[0] ?? 'User'),
+        role: mapRole(prof?.role),
+      };
+      setUser(appUser);
+      localStorage.setItem('user', JSON.stringify(appUser));
     });
 
-    const login = async (email: string, pass: string): Promise<User> => {
-        const loggedInUser = await api.login(email, pass);
-        localStorage.setItem('user', JSON.stringify(loggedInUser));
-        setUser(loggedInUser);
-        return loggedInUser;
-    };
-
-    const logout = () => {
-        localStorage.removeItem('user');
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const sUser = session?.user ?? null;
+      if (!sUser) {
         setUser(null);
+        localStorage.removeItem('user');
+        return;
+      }
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('full_name, role')
+        .eq('id', sUser.id)
+        .maybeSingle();
+
+      const appUser: User = {
+        name: prof?.full_name || (sUser.email?.split('@')[0] ?? 'User'),
+        role: mapRole(prof?.role),
+      };
+      setUser(appUser);
+      localStorage.setItem('user', JSON.stringify(appUser));
+    });
+
+    return () => { sub.subscription.unsubscribe(); };
+  }, []);
+
+  // ĐĂNG NHẬP CHUẨN VỚI SUPABASE
+  const login = async (email: string, pass: string): Promise<User> => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) throw new Error(error.message);
+
+    const sUser = data.user;
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('full_name, role')
+      .eq('id', sUser.id)
+      .maybeSingle();
+
+    const appUser: User = {
+      name: prof?.full_name || (sUser.email?.split('@')[0] ?? 'User'),
+      role: mapRole(prof?.role),
     };
+    setUser(appUser);
+    localStorage.setItem('user', JSON.stringify(appUser));
+    return appUser;
+  };
 
-    const hasPermission = useCallback((requiredRoles: Role[]) => {
-        if (!user) return false;
-        return requiredRoles.includes(user.role);
-    }, [user]);
+  const logout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem('user');
+    setUser(null);
+  };
 
-    const value = useMemo(() => ({
-        user,
-        login,
-        logout,
-        hasPermission,
-    }), [user, hasPermission]);
+  const hasPermission = useCallback((requiredRoles: Role[]) => {
+    if (!user) return false;
+    return requiredRoles.includes(user.role);
+  }, [user]);
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const value = useMemo(() => ({ user, login, logout, hasPermission }), [user, hasPermission]);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
 
 
 // --- LAYOUT COMPONENTS ---
