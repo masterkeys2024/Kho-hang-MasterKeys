@@ -13,21 +13,50 @@ export default function Products() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<ProductWithStock | null>(null);
     
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const [productData, groupData] = await Promise.all([
-                api.getProducts(),
-                api.getProductGroups()
-            ]);
-            setProducts(productData as ProductWithStock[]);
-            setGroups(groupData);
-        } catch (error) {
-            console.error("Failed to fetch products:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+const fetchData = async () => {
+  setLoading(true);
+  try {
+    // Gọi Supabase: lấy danh sách sản phẩm (id, sku, name, unit,...)
+    const { data, error } = await listProducts();
+    if (error) throw error;
+
+    // CHUẨN HÓA: map về ProductWithStock để UI cũ chạy bình thường
+    // - group: tạm đặt "Chưa phân nhóm" (sau sẽ nối bảng groups thật)
+    // - variants: tạo 1 variant đơn giản từ SKU để UI có hàng hiển thị
+    const normalized: ProductWithStock[] = (data ?? []).map((p: any) => ({
+      id: p.id,
+      sku: p.sku,
+      name: p.name,
+      unit: p.unit ?? '',
+      imageUrl: p.image_url ?? '',
+      group: { id: 0, name: 'Chưa phân nhóm' } as ProductGroup,
+      variants: [{
+        id: p.id,                       // tạm dùng id sản phẩm cho variant
+        productId: p.id,
+        variantSku: p.sku,
+        color: undefined,
+        size: undefined,
+        spec: undefined,
+        attributes: {},
+        thresholds: {},
+        totalStock: p.totalStock ?? 0,  // nếu sau này bạn có view tổng tồn
+      }],
+      status: p.status ?? undefined,
+      createdAt: p.created_at ?? undefined,
+      createdBy: p.created_by ?? undefined,
+      note: p.note ?? undefined,
+    }));
+
+    setProducts(normalized);
+
+    // Nhóm hàng: tạm để danh sách rỗng (UI vẫn hoạt động với "Tất cả nhóm hàng")
+    setGroups([]);
+  } catch (error) {
+    console.error('Failed to fetch products:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
     useEffect(() => {
         fetchData();
