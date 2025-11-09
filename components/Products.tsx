@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { api } from '../services/mockApi';
+import { listProducts, createProduct, updateProduct, deleteProduct } from '../services/products';
 import { ProductGroup, ProductWithStock } from '../types';
 import * as Icons from './Icons';
 import ProductForm from './ProductForm';
