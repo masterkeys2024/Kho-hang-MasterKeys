@@ -127,11 +127,13 @@ const appUser: User = {
     return appUser;
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem('user');
-    setUser(null);
-  };
+const logout = async () => {
+  await supabase.auth.signOut();
+  localStorage.removeItem('user');
+  setUser(null);
+  window.location.hash = '/login';
+};
+
 
   const hasPermission = useCallback((requiredRoles: Role[]) => {
     if (!user) return false;
