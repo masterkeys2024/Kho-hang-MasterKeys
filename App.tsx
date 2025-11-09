@@ -65,10 +65,13 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         .eq('id', sUser.id)
         .maybeSingle();
 
-      const appUser: User = {
-        name: prof?.full_name || (sUser.email?.split('@')[0] ?? 'User'),
-        role: mapRole(prof?.role),
-      };
+   const appUser: User = {
+  id: sUser.id,
+  email: sUser.email ?? '',
+  name: prof?.full_name || (sUser.email?.split('@')[0] ?? 'User'),
+  role: mapRole(prof?.role),
+};
+
       setUser(appUser);
       localStorage.setItem('user', JSON.stringify(appUser));
     });
@@ -86,10 +89,13 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         .eq('id', sUser.id)
         .maybeSingle();
 
-      const appUser: User = {
-        name: prof?.full_name || (sUser.email?.split('@')[0] ?? 'User'),
-        role: mapRole(prof?.role),
-      };
+    const appUser: User = {
+  id: sUser.id,
+  email: sUser.email ?? '',
+  name: prof?.full_name || (sUser.email?.split('@')[0] ?? 'User'),
+  role: mapRole(prof?.role),
+};
+
       setUser(appUser);
       localStorage.setItem('user', JSON.stringify(appUser));
     });
@@ -109,10 +115,13 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       .eq('id', sUser.id)
       .maybeSingle();
 
-    const appUser: User = {
-      name: prof?.full_name || (sUser.email?.split('@')[0] ?? 'User'),
-      role: mapRole(prof?.role),
-    };
+const appUser: User = {
+  id: sUser.id,
+  email: sUser.email ?? '',
+  name: prof?.full_name || (sUser.email?.split('@')[0] ?? 'User'),
+  role: mapRole(prof?.role),
+};
+
     setUser(appUser);
     localStorage.setItem('user', JSON.stringify(appUser));
     return appUser;
