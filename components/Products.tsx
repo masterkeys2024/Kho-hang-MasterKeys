@@ -115,8 +115,10 @@ const fetchData = async () => {
                 </div>
             </div>
 
-            {loading ? <p>Đang tải...</p> : (
-            <>
+           {loading ? (
+  <p>Đang tải...</p>
+) : (
+  <>
     {!loading && products.length === 0 && (
       <div className="text-center text-gray-500 py-6">
         Chưa có sản phẩm nào.
@@ -212,6 +214,7 @@ const fetchData = async () => {
                         </tbody>
                     </table>
                 </div>
+       </>
             )}
             <ProductForm 
                 isOpen={isModalOpen} 
