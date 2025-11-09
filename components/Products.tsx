@@ -124,6 +124,12 @@ const fetchData = async () => {
             </div>
 
             {loading ? <p>Đang tải...</p> : (
+            <>
+    {!loading && products.length === 0 && (
+      <div className="text-center text-gray-500 py-6">
+        Chưa có sản phẩm nào.
+      </div>
+    )}
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
