@@ -44,25 +44,17 @@ const fetchData = async () => {
     }));
 
     setProducts(normalized);
+    // Nhóm hàng: tạm để rỗng
+    setGroups([]);
   } catch (e: any) {
     console.error('[PRODUCTS] fetchData error', e);
-    alert('Lỗi tải danh sách sản phẩm: ' + e?.message);
+    alert('Lỗi tải danh sách sản phẩm: ' + (e?.message ?? e));
   } finally {
     setLoading(false);
   }
 };
 
 
-    setProducts(normalized);
-
-    // Nhóm hàng: tạm để danh sách rỗng (UI vẫn hoạt động với "Tất cả nhóm hàng")
-    setGroups([]);
-  } catch (error) {
-    console.error('Failed to fetch products:', error);
-  } finally {
-    setLoading(false);
-  }
-};
 
     useEffect(() => {
         fetchData();
