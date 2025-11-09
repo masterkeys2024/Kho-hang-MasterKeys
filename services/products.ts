@@ -14,7 +14,7 @@ export type InsertProduct = {
 export async function listProducts() {
   const { data, error } = await supabase
     .from('products')
-    .select('id, sku, name, unit, image_url, note')
+    .select('id, sku, name, unit, note')
     .order('id', { ascending: false });
   return { data, error };
 }
