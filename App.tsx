@@ -64,6 +64,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         .select('full_name, role')
         .eq('id', sUser.id)
         .maybeSingle();
+        console.log('[DEBUG ROLE] getSession', sUser.email, prof?.role);
+
 
    const appUser: User = {
   id: sUser.id,
@@ -88,6 +90,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         .select('full_name, role')
         .eq('id', sUser.id)
         .maybeSingle();
+        console.log('[DEBUG ROLE] onAuthStateChange', sUser.email, prof?.role);
+
 
     const appUser: User = {
   id: sUser.id,
@@ -114,6 +118,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       .select('full_name, role')
       .eq('id', sUser.id)
       .maybeSingle();
+      console.log('[DEBUG ROLE] login', sUser.email, prof?.role);
+
 
 const appUser: User = {
   id: sUser.id,
