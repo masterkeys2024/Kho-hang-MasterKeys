@@ -16,36 +16,42 @@ export default function Products() {
 const fetchData = async () => {
   setLoading(true);
   try {
-    // Gọi Supabase: lấy danh sách sản phẩm (id, sku, name, unit,...)
+    console.log('[PRODUCTS] fetchData start');
     const { data, error } = await listProducts();
+    console.log('[PRODUCTS] resp', { error, rows: data?.length, sample: data?.[0] });
+
     if (error) throw error;
 
-    // CHUẨN HÓA: map về ProductWithStock để UI cũ chạy bình thường
-    // - group: tạm đặt "Chưa phân nhóm" (sau sẽ nối bảng groups thật)
-    // - variants: tạo 1 variant đơn giản từ SKU để UI có hàng hiển thị
     const normalized: ProductWithStock[] = (data ?? []).map((p: any) => ({
       id: p.id,
       sku: p.sku,
       name: p.name,
       unit: p.unit ?? '',
       imageUrl: p.image_url ?? '',
-      group: { id: 0, name: 'Chưa phân nhóm' } as ProductGroup,
+      group: { id: 0, name: 'Chưa phân nhóm' },
       variants: [{
-        id: p.id,                       // tạm dùng id sản phẩm cho variant
+        id: p.id,
         productId: p.id,
         variantSku: p.sku,
-        color: undefined,
-        size: undefined,
-        spec: undefined,
         attributes: {},
         thresholds: {},
-        totalStock: p.totalStock ?? 0,  // nếu sau này bạn có view tổng tồn
+        totalStock: p.totalStock ?? 0,
       }],
       status: p.status ?? undefined,
       createdAt: p.created_at ?? undefined,
       createdBy: p.created_by ?? undefined,
       note: p.note ?? undefined,
     }));
+
+    setProducts(normalized);
+  } catch (e: any) {
+    console.error('[PRODUCTS] fetchData error', e);
+    alert('Lỗi tải danh sách sản phẩm: ' + e?.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
     setProducts(normalized);
 
