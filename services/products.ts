@@ -4,10 +4,7 @@ import { supabase } from '../lib/supabase';
 export type InsertProduct = {
   sku: string;
   name: string;
-  group_id?: number | null;
   unit?: string | null;
-  image_url?: string | null;
-  note?: string | null;
 };
 
 // Lấy danh sách sản phẩm
@@ -24,7 +21,7 @@ export async function createProduct(input: InsertProduct) {
   const { data, error } = await supabase
     .from('products')
     .insert(input)
-    .select('id, sku, name, unit, image_url, note')
+    .select('id, sku, name, unit')
     .single();
   return { data, error };
 }
@@ -35,7 +32,7 @@ export async function updateProduct(id: number, patch: Partial<InsertProduct>) {
     .from('products')
     .update(patch)
     .eq('id', id)
-    .select('id, sku, name, unit, image_url, note')
+    .select('id, sku, name, unit')
     .single();
   return { data, error };
 }
