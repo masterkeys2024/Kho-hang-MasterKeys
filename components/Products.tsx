@@ -240,23 +240,9 @@ const fetchData = async () => {
   isOpen={isModalOpen}
   onClose={() => setIsModalOpen(false)}
   productToEdit={editingProduct}
-  onSave={async (formValue: any) => {
-    // Map tên field từ form → cột DB
-    const payload = {
-      sku: formValue.sku || formValue.SKU || formValue.productSku,
-      name: formValue.name || formValue.productName,
-      unit: formValue.unit ?? null,
-    };
-
-    const { data, error } = await createProduct(payload);
-    if (error) {
-      alert('Lỗi tạo sản phẩm: ' + error.message);
-      return;
-    }
-
-    // Cập nhật UI tại chỗ (khỏi chờ refetch)
-    setProducts(prev => [normalizeProductRow(data), ...prev]);
-    setIsModalOpen(false);
+  onSave={async () => {
+    // refetch từ DB để thấy item mới
+    await fetchData();
   }}
 />
 
