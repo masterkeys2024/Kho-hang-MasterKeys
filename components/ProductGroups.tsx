@@ -31,18 +31,19 @@ export default function ProductGroups() {
         fetchGroups();
     }, [fetchGroups]);
 
-    const handleAddGroup = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newGroupName.trim()) return;
-        setError('');
-        try {
-            await .createProductGroup(newGroupName, user!.id);
-            setNewGroupName('');
-            await fetchGroups();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Lỗi khi tạo nhóm mới.');
-        }
-    };
+const handleAddGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGroupName.trim()) return;
+    setError('');
+    try {
+        const { error } = await createGroup(newGroupName);
+        if (error) throw error;
+        setNewGroupName('');
+        await fetchGroups();
+    } catch (err) {
+        setError(err instanceof Error ? err.message : 'Lỗi khi tạo nhóm mới.');
+    }
+};
 
     const confirmDeleteGroup = (id: number, name: string) => {
         setDeleteConfirmation({ id, name });
