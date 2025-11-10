@@ -16,7 +16,8 @@ export default function ProductGroups() {
     const fetchGroups = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await api.getProductGroups();
+            const { data, error } = await listGroups();
+            if (error) throw error;
             setGroups(data);
             setError('');
         } catch (err) {
@@ -35,7 +36,7 @@ export default function ProductGroups() {
         if (!newGroupName.trim()) return;
         setError('');
         try {
-            await api.createProductGroup(newGroupName, user!.id);
+            await .createProductGroup(newGroupName, user!.id);
             setNewGroupName('');
             await fetchGroups();
         } catch (err) {
@@ -51,7 +52,8 @@ export default function ProductGroups() {
         if (!deleteConfirmation) return;
         setError('');
         try {
-            await api.deleteProductGroup(deleteConfirmation.id, user!.id);
+            const { error } = await deleteGroup(String(deleteConfirmation.id));
+            if (error) throw error;
             await fetchGroups();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi khi xóa nhóm. Đảm bảo nhóm không có sản phẩm nào.');
@@ -64,7 +66,8 @@ export default function ProductGroups() {
         if (!editingGroup || !editingGroup.name.trim()) return;
         setError('');
         try {
-            await api.updateProductGroup(editingGroup.id, editingGroup.name, user!.id);
+            const { error } = await updateGroup(String(editingGroup.id), { name: editingGroup.name });
+            if (error) throw error;
             setEditingGroup(null);
             await fetchGroups();
         } catch (err) {
