@@ -165,9 +165,10 @@ try {
         setError('');
         setIsSubmitting(true);
         try {
-            await api.deleteProduct(productToEdit.id, user!.id);
-            onSave();
-            onClose();
+       await deleteProduct(productToEdit.id);
+onSave();
+onClose();
+
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Lỗi không xác định khi xóa sản phẩm.');
         } finally {
