@@ -119,63 +119,58 @@ const ProductForm: React.FC<ProductFormProps> = ({ isOpen, onClose, onSave, prod
         setVariants(variants.filter((_, i) => i !== index));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
+   const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setError(null);
 
-        const requiredSku = hasVariants ? variants.some(v => !v.variantSku) : !productSku;
-        if (!productName || !productGroupId || requiredSku) {
-            setError('Vui lòng điền đầy đủ các trường bắt buộc (*).');
-            return;
-        }
-        
-        setIsSubmitting(true);
-try {
-  if (isEditMode && productToEdit) {
-    // UPDATE: chỉ cập nhật các cột có trong bảng
-    const { error } = await updateProduct(productToEdit.id, {
-      sku: productSku.trim(),
-      name: productName.trim(),
-      unit: unit?.trim() || null,
-    });
-    if (error) throw error;
-  } else {
-    // CREATE: chỉ chèn các cột có trong bảng
-    const { error } = await createProduct({
-      sku: productSku.trim(),
-      name: productName.trim(),
-      unit: unit?.trim() || null,
-    });
-    if (error) throw error;
+  try {
+    // Lấy dữ liệu từ state của form (đang có sẵn trong file của bạn)
+    // tên state phổ biến: productSku, productName, unit ...
+    const payload = {
+      sku: (productSku || '').trim(),
+      name: (productName || '').trim(),
+      unit: (unit || '').trim() || null,
+    };
+
+    if (!payload.sku || !payload.name) {
+      setError('Vui lòng nhập SKU và Tên sản phẩm.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (isEditMode && productToEdit) {
+      const { error } = await updateProduct(productToEdit.id, payload);
+      if (error) throw error;
+    } else {
+      const { error } = await createProduct(payload);
+      if (error) throw error;
+    }
+
+    // Báo cho parent refetch + đóng modal
+    onSave?.();
+    onClose();
+  } catch (err: any) {
+    setError(err?.message || 'Đã xảy ra lỗi khi lưu sản phẩm.');
+  } finally {
+    setIsSubmitting(false);
   }
+};
 
-  onSave();     // báo parent refetch
-  onClose();    // đóng modal
-} catch (err: any) {
-  setError(err?.message || 'Lỗi không xác định.');
-} finally {
-  setIsSubmitting(false);
-}
+const handleDeleteProduct = async () => {
+  if (!productToEdit) return;
+  if (!confirm('Bạn có chắc muốn xoá sản phẩm này?')) return;
 
-    };
+  try {
+    const { error } = await deleteProduct(productToEdit.id);
+    if (error) throw error;
+    onSave?.();
+    onClose();
+  } catch (err: any) {
+    setError(err?.message || 'Không thể xoá sản phẩm.');
+  }
+};
 
-    const handleDeleteProduct = async () => {
-        if (!isEditMode || !productToEdit) return;
-
-        setError('');
-        setIsSubmitting(true);
-        try {
-       await deleteProduct(productToEdit.id);
-onSave();
-onClose();
-
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Lỗi không xác định khi xóa sản phẩm.');
-        } finally {
-            setIsSubmitting(false);
-            setShowDeleteConfirm(false);
-        }
-    };
 
     if (!isOpen) return null;
 
