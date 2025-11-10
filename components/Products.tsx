@@ -240,11 +240,9 @@ const fetchData = async () => {
   isOpen={isModalOpen}
   onClose={() => setIsModalOpen(false)}
   productToEdit={editingProduct}
-  onSave={async () => {
-    // refetch từ DB để thấy item mới
-    await fetchData();
-  }}
+  onSave={async () => { await fetchData(); }}   // chỉ refetch
 />
+
 
         </div>
     );
