@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createProduct, updateProduct, deleteProduct } from '../services/products';
+import { listGroups } from '../services/productGroups';
 import { ProductGroup, ProductVariant, Warehouse, ProductWithStock } from '../types';
 import * as Icons from './Icons';
 import { useAuth } from '../App';
@@ -49,11 +50,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ isOpen, onClose, onSave, prod
     useEffect(() => {
         if (isOpen) {
       setWarehouses([]); // chưa nối DB kho => để rỗng
-      setGroups([]);     // chưa nối DB nhóm => để rỗng
+      listGroups().then(({ data }) => setGroups(data ?? [])); // NẠP NHÓM
             if (isEditMode && productToEdit) {
                 setProductName(productToEdit.name);
                 setProductSku(productToEdit.sku);
-                setProductGroupId(String(productToEdit.group.id));
+                setProductGroupId(productToEdit.group?.id && productToEdit.group.id !== 0 ? String(productToEdit.group.id) : '');
                 setUnit(productToEdit.unit);
                 setImageUrl(productToEdit.imageUrl);
                 setVariants(productToEdit.variants.map(v => ({ ...v }))); // Copy variants
@@ -131,6 +132,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ isOpen, onClose, onSave, prod
       sku: (productSku || '').trim(),
       name: (productName || '').trim(),
       unit: (unit || '').trim() || null,
+      group_id: productGroupId || null,
     };
 
     if (!payload.sku || !payload.name) {
