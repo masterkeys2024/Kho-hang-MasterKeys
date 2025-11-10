@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { api } from '../services/mockApi';
+import { listGroups, createGroup, updateGroup, deleteGroup } from '../services/productGroups';
 import { ProductGroup } from '../types';
 import * as Icons from './Icons';
 import { useAuth } from '../App';
