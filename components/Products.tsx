@@ -104,17 +104,21 @@ const fetchData = async () => {
         setIsModalOpen(false);
         setEditingProduct(null); // Also clear editing product on close
     };
+const filteredProducts = useMemo(() => {
+  const term = (searchTerm || '').trim().toLowerCase();
 
-    const filteredProducts = useMemo(() => {
-        return products
-            .filter(p => 
-                (p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                 p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
-            )
-            .filter(p => 
-                selectedGroup === '' || String(p.group.id) === String(selectedGroup))
-            );
-    }, [products, searchTerm, selectedGroup]);
+  return products.filter((p) => {
+    const matchesTerm =
+      !term ||
+      p.name?.toLowerCase().includes(term) ||
+      p.sku?.toLowerCase().includes(term);
+
+    const matchesGroup =
+      !selectedGroup || String(p.group?.id) === String(selectedGroup);
+
+    return matchesTerm && matchesGroup;
+  });
+}, [products, searchTerm, selectedGroup]);
 
     return (
         <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
