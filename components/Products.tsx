@@ -4,6 +4,26 @@ import { ProductGroup, ProductWithStock } from '../types';
 import * as Icons from './Icons';
 import ProductForm from './ProductForm';
 
+function normalizeProductRow(p: any): ProductWithStock {
+  return {
+    id: p.id,
+    sku: p.sku,
+    name: p.name,
+    unit: p.unit ?? '',
+    imageUrl: '',
+    group: { id: 0, name: 'Chưa phân nhóm' },
+    variants: [{
+      id: p.id,
+      productId: p.id,
+      variantSku: p.sku,
+      attributes: {},
+      thresholds: {},
+      totalStock: 0,
+    }],
+  };
+}
+
+
 export default function Products() {
     const [products, setProducts] = useState<ProductWithStock[]>([]);
     const [groups, setGroups] = useState<ProductGroup[]>([]);
@@ -216,12 +236,30 @@ const fetchData = async () => {
                 </div>
        </>
             )}
-            <ProductForm 
-                isOpen={isModalOpen} 
-                onClose={handleCloseModal} 
-                onSave={fetchData}
-                productToEdit={editingProduct} 
-            />
+<ProductForm
+  isOpen={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  productToEdit={editingProduct}
+  onSave={async (formValue: any) => {
+    // Map tên field từ form → cột DB
+    const payload = {
+      sku: formValue.sku || formValue.SKU || formValue.productSku,
+      name: formValue.name || formValue.productName,
+      unit: formValue.unit ?? null,
+    };
+
+    const { data, error } = await createProduct(payload);
+    if (error) {
+      alert('Lỗi tạo sản phẩm: ' + error.message);
+      return;
+    }
+
+    // Cập nhật UI tại chỗ (khỏi chờ refetch)
+    setProducts(prev => [normalizeProductRow(data), ...prev]);
+    setIsModalOpen(false);
+  }}
+/>
+
         </div>
     );
 }
