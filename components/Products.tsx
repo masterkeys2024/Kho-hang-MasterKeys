@@ -26,6 +26,12 @@ function normalizeProductRow(p: any): ProductWithStock {
   };
 }
 
+const groupName = (gid: any) => {
+  if (!gid || gid === 0) return 'Chưa phân nhóm';
+  const g = groups.find(x => String(x.id) === String(gid));
+  return g?.name ?? '(nhóm đã xoá)';
+};
+
 
 export default function Products() {
     const [products, setProducts] = useState<ProductWithStock[]>([]);
