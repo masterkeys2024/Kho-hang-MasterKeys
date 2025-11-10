@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { api } from '../services/mockApi';
+import { createProduct, updateProduct, deleteProduct } from '../services/products';
 import { ProductGroup, ProductVariant, Warehouse, ProductWithStock } from '../types';
 import * as Icons from './Icons';
 import { useAuth } from '../App';
@@ -130,37 +130,33 @@ const ProductForm: React.FC<ProductFormProps> = ({ isOpen, onClose, onSave, prod
         }
         
         setIsSubmitting(true);
-        try {
-            if (isEditMode && productToEdit) {
-                const variantsToUpdate = hasVariants 
-                    ? variants
-                    : [{ ...variants[0], id: variants[0].id || productToEdit.variants[0].id, variantSku: productSku, color: '', size: '' }];
-                
-                const productData = {
-                    sku: productSku, name: productName, group: { id: parseInt(productGroupId), name: ''},
-                    unit, imageUrl,
-                    variants: variantsToUpdate.map(({totalStock, initialStock, ...v}) => v)
-                };
-                await api.updateProduct(productToEdit.id, productData, user!.id);
-            } else { // Create mode
-                const variantsToCreate = hasVariants
-                    ? variants
-                    : [{ ...variants[0], variantSku: productSku, color: '', size: '' }];
+try {
+  if (isEditMode && productToEdit) {
+    // UPDATE: chỉ cập nhật các cột có trong bảng
+    const { error } = await updateProduct(productToEdit.id, {
+      sku: productSku.trim(),
+      name: productName.trim(),
+      unit: unit?.trim() || null,
+    });
+    if (error) throw error;
+  } else {
+    // CREATE: chỉ chèn các cột có trong bảng
+    const { error } = await createProduct({
+      sku: productSku.trim(),
+      name: productName.trim(),
+      unit: unit?.trim() || null,
+    });
+    if (error) throw error;
+  }
 
-                const createData = {
-                    sku: productSku, name: productName, group: { id: parseInt(productGroupId), name: ''},
-                    unit, imageUrl,
-                    variants: variantsToCreate.map(({totalStock, ...v}) => v) as (Omit<ProductVariant, 'id' | 'productId'> & { initialStock?: Record<number, number> })[]
-                };
-                await api.createProduct(createData, user!.id);
-            }
-            onSave();
-            onClose();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Lỗi không xác định.');
-        } finally {
-            setIsSubmitting(false);
-        }
+  onSave();     // báo parent refetch
+  onClose();    // đóng modal
+} catch (err: any) {
+  setError(err?.message || 'Lỗi không xác định.');
+} finally {
+  setIsSubmitting(false);
+}
+
     };
 
     const handleDeleteProduct = async () => {
