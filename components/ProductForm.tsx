@@ -48,8 +48,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ isOpen, onClose, onSave, prod
 
     useEffect(() => {
         if (isOpen) {
-            api.getWarehouses().then(setWarehouses);
-            api.getProductGroups().then(setGroups);
+      setWarehouses([]); // chưa nối DB kho => để rỗng
+      setGroups([]);     // chưa nối DB nhóm => để rỗng
             if (isEditMode && productToEdit) {
                 setProductName(productToEdit.name);
                 setProductSku(productToEdit.sku);
