@@ -193,7 +193,7 @@ const handleDeleteProduct = async () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Nhóm sản phẩm*</label>
-                                <select value={productGroupId} onChange={e => setProductGroupId(e.target.value)} required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                <select value={productGroupId} onChange={e => setProductGroupId(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                                     <option value="">Chọn nhóm</option>
                                     {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                                 </select>
