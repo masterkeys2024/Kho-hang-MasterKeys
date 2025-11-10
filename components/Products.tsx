@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { listProducts, createProduct, updateProduct, deleteProduct } from '../services/products';
+import { listGroups } from '../services/productGroups';
 import { ProductGroup, ProductWithStock } from '../types';
 import * as Icons from './Icons';
 import ProductForm from './ProductForm';
@@ -11,7 +12,9 @@ function normalizeProductRow(p: any): ProductWithStock {
     name: p.name,
     unit: p.unit ?? '',
     imageUrl: '',
-    group: { id: 0, name: 'Chưa phân nhóm' },
+    group: p.group_id
+      ? { id: p.group_id, name: '' } // tên sẽ tra theo groups state khi render
+      : { id: 0, name: 'Chưa phân nhóm' },
     variants: [{
       id: p.id,
       productId: p.id,
@@ -77,6 +80,7 @@ const fetchData = async () => {
 
 
     useEffect(() => {
+      listGroups().then(({ data }) => setGroups(data ?? []));
         fetchData();
     }, []);
 
@@ -102,7 +106,7 @@ const fetchData = async () => {
                  p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
             )
             .filter(p => 
-                selectedGroup === '' || p.group.id === parseInt(selectedGroup)
+                selectedGroup === '' || String(p.group.id) === String(selectedGroup))
             );
     }, [products, searchTerm, selectedGroup]);
 
@@ -167,7 +171,7 @@ const fetchData = async () => {
                                     return (
                                         <tr key={product.id} className="hover:bg-gray-50">
                                             <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-500">{product.group.name}</div>
+                                                <div className="text-sm text-gray-500">{groupName(product.group.id)}</div>
                                             </td>
                                             <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-gray-900">{product.name}</div>
