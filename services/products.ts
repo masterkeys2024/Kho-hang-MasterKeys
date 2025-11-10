@@ -27,7 +27,7 @@ export async function createProduct(input: InsertProduct) {
 }
 
 // Sửa sản phẩm
-export async function updateProduct(id: number, patch: Partial<InsertProduct>) {
+export async function updateProduct(id: string, patch: { sku?: string; name?: string; unit?: string | null }) {
   const { data, error } = await supabase
     .from('products')
     .update(patch)
@@ -38,10 +38,10 @@ export async function updateProduct(id: number, patch: Partial<InsertProduct>) {
 }
 
 // Xoá sản phẩm
-export async function deleteProduct(id: number) {
-  const { error } = await supabase
+export async function deleteProduct(id: string) {
+  const { data, error } = await supabase
     .from('products')
     .delete()
     .eq('id', id);
-  return { error };
+  return { data, error };
 }
