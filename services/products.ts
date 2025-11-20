@@ -1,3 +1,4 @@
+// services/products.ts
 import { supabase } from '../lib/supabase';
 
 export type InsertProduct = {
@@ -6,7 +7,7 @@ export type InsertProduct = {
   unit?: string | null;
   price?: number | null;
   supplier_id?: string | null;
-  group_id?: string | null;    // uuid
+  group_id?: string | null;    // uuid -> dùng string
   image_url?: string | null;
 };
 
@@ -14,8 +15,9 @@ export type InsertProduct = {
 export async function listProducts() {
   const { data, error } = await supabase
     .from('products')
-    // KHÔNG còn category
-    .select('id, sku, name, unit, price, created_at, supplier_id, group_id, image_url')
+    .select(
+      'id, sku, name, unit, price, created_at, supplier_id, group_id, image_url'
+    )
     .order('created_at', { ascending: false });
 
   return { data, error };
@@ -26,7 +28,9 @@ export async function createProduct(input: InsertProduct) {
   const { data, error } = await supabase
     .from('products')
     .insert(input)
-    .select('id, sku, name, unit, price, created_at, supplier_id, group_id, image_url')
+    .select(
+      'id, sku, name, unit, price, created_at, supplier_id, group_id, image_url'
+    )
     .single();
 
   return { data, error };
@@ -49,7 +53,9 @@ export async function updateProduct(
     .from('products')
     .update(patch)
     .eq('id', id)
-    .select('id, sku, name, unit, price, created_at, supplier_id, group_id, image_url')
+    .select(
+      'id, sku, name, unit, price, created_at, supplier_id, group_id, image_url'
+    )
     .single();
 
   return { data, error };
