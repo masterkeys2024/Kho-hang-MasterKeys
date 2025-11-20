@@ -7,32 +7,32 @@ import ProductForm from './ProductForm';
 const Products: React.FC = () => {
   const [products, setProducts] = useState<ProductWithStock[]>([]);
   const [groups, setGroups] = useState<ProductGroup[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithStock | null>(null);
 
-  // Lấy tên nhóm từ id
+  // Lấy tên nhóm theo id
   const groupName = (gid?: number | string | null) => {
     if (!gid || gid === 0) return 'Chưa phân nhóm';
     const g = groups.find((x) => String(x.id) === String(gid));
     return g?.name ?? '(nhóm đã xoá)';
   };
 
-  // Load dữ liệu từ Supabase
+  // Load dữ liệu
   const fetchData = async () => {
     setLoading(true);
     try {
       console.log('[PRODUCTS] fetchData start');
 
-      const [{ data: productsData, error: productsError }, { data: groupsData, error: groupsError }] =
+      const [{ data: productRows, error: productError }, { data: groupRows, error: groupError }] =
         await Promise.all([listProducts(), listGroups()]);
 
-      if (productsError) throw productsError;
-      if (groupsError) throw groupsError;
+      if (productError) throw productError;
+      if (groupError) throw groupError;
 
-      const normalized = (productsData ?? []).map((p: any) => ({
+      const normalized: ProductWithStock[] = (productRows ?? []).map((p: any) => ({
         id: p.id,
         sku: p.sku,
         name: p.name,
@@ -41,6 +41,7 @@ const Products: React.FC = () => {
         group: p.group_id
           ? { id: p.group_id, name: '' }
           : { id: 0, name: 'Chưa phân nhóm' },
+        // variants tối thiểu để type không lỗi
         variants: [
           {
             id: p.id,
@@ -51,14 +52,10 @@ const Products: React.FC = () => {
             totalStock: p.totalStock ?? 0,
           },
         ],
-        status: p.status ?? undefined,
-        createdAt: p.created_at ?? undefined,
-        createdBy: p.created_by ?? undefined,
-        note: p.note ?? undefined,
-      })) as ProductWithStock[];
+      }));
 
       setProducts(normalized);
-      setGroups(groupsData ?? []);
+      setGroups(groupRows ?? []);
       console.log('[PRODUCTS] resp', {
         rows: normalized.length,
         sample: normalized[0],
@@ -67,12 +64,11 @@ const Products: React.FC = () => {
       console.error('[PRODUCTS] fetchData error', e);
       alert('Lỗi tải danh sách sản phẩm: ' + (e?.message ?? 'Unknown error'));
     } finally {
-      // 👈 Quan trọng: luôn tắt loading
+      // QUAN TRỌNG: luôn tắt loading, nên không thể kẹt ở "Đang tải..."
       setLoading(false);
     }
   };
 
-  // Chạy fetchData 1 lần khi vào màn
   useEffect(() => {
     fetchData();
   }, []);
@@ -155,55 +151,49 @@ const Products: React.FC = () => {
       {/* Danh sách sản phẩm */}
       {loading ? (
         <p>Đang tải...</p>
+      ) : filteredProducts.length === 0 ? (
+        <p className="mt-4 text-gray-500">Chưa có sản phẩm nào.</p>
       ) : (
-        <>
-          {filteredProducts.length === 0 ? (
-            <p className="text-gray-500 mt-4">Chưa có sản phẩm nào.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-gray-50">
-                    <th className="text-left px-3 py-2">Nhóm sản phẩm</th>
-                    <th className="text-left px-3 py-2">Sản phẩm</th>
-                    <th className="text-left px-3 py-2">SKU</th>
-                    <th className="text-left px-3 py-2">ĐVT</th>
-                    <th className="text-right px-3 py-2">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.map((p) => (
-                    <tr key={p.id} className="border-b hover:bg-gray-50">
-                      <td className="px-3 py-2">
-                        {groupName(p.group?.id)}
-                      </td>
-                      <td className="px-3 py-2">{p.name}</td>
-                      <td className="px-3 py-2">{p.sku}</td>
-                      <td className="px-3 py-2">{p.unit}</td>
-                      <td className="px-3 py-2 text-right space-x-2">
-                        <button
-                          onClick={() => openEditModal(p)}
-                          className="text-blue-600 hover:underline text-xs"
-                        >
-                          Sửa
-                        </button>
-                        <button
-                          onClick={() => handleDelete(p)}
-                          className="text-red-600 hover:underline text-xs"
-                        >
-                          Xoá
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b bg-gray-50">
+                <th className="text-left px-3 py-2">Nhóm sản phẩm</th>
+                <th className="text-left px-3 py-2">Sản phẩm</th>
+                <th className="text-left px-3 py-2">SKU</th>
+                <th className="text-left px-3 py-2">ĐVT</th>
+                <th className="text-right px-3 py-2">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProducts.map((p) => (
+                <tr key={p.id} className="border-b hover:bg-gray-50">
+                  <td className="px-3 py-2">{groupName(p.group?.id)}</td>
+                  <td className="px-3 py-2">{p.name}</td>
+                  <td className="px-3 py-2">{p.sku}</td>
+                  <td className="px-3 py-2">{p.unit}</td>
+                  <td className="px-3 py-2 text-right space-x-2">
+                    <button
+                      onClick={() => openEditModal(p)}
+                      className="text-blue-600 hover:underline text-xs"
+                    >
+                      Sửa
+                    </button>
+                    <button
+                      onClick={() => handleDelete(p)}
+                      className="text-red-600 hover:underline text-xs"
+                    >
+                      Xoá
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
-      {/* Modal thêm / sửa */}
+      {/* Modal thêm / sửa sản phẩm */}
       <ProductForm
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
