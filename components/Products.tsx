@@ -26,21 +26,23 @@ function normalizeProductRow(p: any): ProductWithStock {
   };
 }
 
-const groupName = (gid: any) => {
-  if (!gid || gid === 0) return 'Chưa phân nhóm';
-  const g = groups.find(x => String(x.id) === String(gid));
-  return g?.name ?? '(nhóm đã xoá)';
-};
 
 
 export default function Products() {
-    const [products, setProducts] = useState<ProductWithStock[]>([]);
-    const [groups, setGroups] = useState<ProductGroup[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedGroup, setSelectedGroup] = useState<string>('');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<ProductWithStock | null>(null);
+  const [products, setProducts] = useState<ProductWithStock[]>([]);
+  const [groups, setGroups] = useState<ProductGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState<string>('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductWithStock | null>(null);
+
+  // ✅ groupName dùng được state groups
+  const groupName = (gid: any) => {
+    if (!gid || gid === 0) return 'Chưa phân nhóm';
+    const g = groups.find((x) => String(x.id) === String(gid));
+    return g?.name ?? '(nhóm đã xoá)';
+  };
     
 const fetchData = async () => {
   setLoading(true);
