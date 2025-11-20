@@ -1,264 +1,219 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { listProducts, createProduct, updateProduct, deleteProduct } from '../services/products';
+import { listProducts, deleteProduct } from '../services/products';
 import { listGroups } from '../services/productGroups';
 import { ProductGroup, ProductWithStock } from '../types';
-import * as Icons from './Icons';
 import ProductForm from './ProductForm';
 
-function normalizeProductRow(p: any): ProductWithStock {
-  return {
-    id: p.id,
-    sku: p.sku,
-    name: p.name,
-    unit: p.unit ?? '',
-    imageUrl: '',
-    group: p.group_id
-      ? { id: p.group_id, name: '' } // tên sẽ tra theo groups state khi render
-      : { id: 0, name: 'Chưa phân nhóm' },
-    variants: [{
-      id: p.id,
-      productId: p.id,
-      variantSku: p.sku,
-      attributes: {},
-      thresholds: {},
-      totalStock: 0,
-    }],
-  };
-}
-
-
-
-export default function Products() {
+const Products: React.FC = () => {
   const [products, setProducts] = useState<ProductWithStock[]>([]);
   const [groups, setGroups] = useState<ProductGroup[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithStock | null>(null);
 
-  // ✅ groupName dùng được state groups
-  const groupName = (gid: any) => {
+  // Lấy tên nhóm từ id
+  const groupName = (gid?: number | string | null) => {
     if (!gid || gid === 0) return 'Chưa phân nhóm';
     const g = groups.find((x) => String(x.id) === String(gid));
     return g?.name ?? '(nhóm đã xoá)';
   };
-    
-const fetchData = async () => {
-  setLoading(true);
-  try {
-    console.log('[PRODUCTS] fetchData start');
-    const { data, error } = await listProducts();
-    console.log('[PRODUCTS] resp', { error, rows: data?.length, sample: data?.[0] });
 
-    if (error) throw error;
+  // Load dữ liệu từ Supabase
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      console.log('[PRODUCTS] fetchData start');
 
-    const normalized: ProductWithStock[] = (data ?? []).map((p: any) => ({
-      id: p.id,
-      sku: p.sku,
-      name: p.name,
-      unit: p.unit ?? '',
-      imageUrl: p.image_url ?? '',
-      group: { id: p.group_id ?? 0, name: '' }, 
-      variants: [{
+      const [{ data: productsData, error: productsError }, { data: groupsData, error: groupsError }] =
+        await Promise.all([listProducts(), listGroups()]);
+
+      if (productsError) throw productsError;
+      if (groupsError) throw groupsError;
+
+      const normalized = (productsData ?? []).map((p: any) => ({
         id: p.id,
-        productId: p.id,
-        variantSku: p.sku,
-        attributes: {},
-        thresholds: {},
-        totalStock: p.totalStock ?? 0,
-      }],
-      status: p.status ?? undefined,
-      createdAt: p.created_at ?? undefined,
-      createdBy: p.created_by ?? undefined,
-      note: p.note ?? undefined,
-    }));
+        sku: p.sku,
+        name: p.name,
+        unit: p.unit ?? '',
+        imageUrl: p.image_url ?? '',
+        group: p.group_id
+          ? { id: p.group_id, name: '' }
+          : { id: 0, name: 'Chưa phân nhóm' },
+        variants: [
+          {
+            id: p.id,
+            productId: p.id,
+            variantSku: p.sku,
+            attributes: {},
+            thresholds: {},
+            totalStock: p.totalStock ?? 0,
+          },
+        ],
+        status: p.status ?? undefined,
+        createdAt: p.created_at ?? undefined,
+        createdBy: p.created_by ?? undefined,
+        note: p.note ?? undefined,
+      })) as ProductWithStock[];
 
-    setProducts(normalized);
+      setProducts(normalized);
+      setGroups(groupsData ?? []);
+      console.log('[PRODUCTS] resp', {
+        rows: normalized.length,
+        sample: normalized[0],
+      });
+    } catch (e: any) {
+      console.error('[PRODUCTS] fetchData error', e);
+      alert('Lỗi tải danh sách sản phẩm: ' + (e?.message ?? 'Unknown error'));
+    } finally {
+      // 👈 Quan trọng: luôn tắt loading
+      setLoading(false);
+    }
+  };
 
-  } catch (e: any) {
-    console.error('[PRODUCTS] fetchData error', e);
-    alert('Lỗi tải danh sách sản phẩm: ' + (e?.message ?? e));
-  } finally {
-    setLoading(false);
-  }
+  // Chạy fetchData 1 lần khi vào màn
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Lọc theo tìm kiếm + nhóm
+  const filteredProducts = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return products.filter((p) => {
+      const matchTerm =
+        !term ||
+        p.name.toLowerCase().includes(term) ||
+        p.sku.toLowerCase().includes(term);
+
+      const matchGroup =
+        !selectedGroup || String(p.group?.id) === String(selectedGroup);
+
+      return matchTerm && matchGroup;
+    });
+  }, [products, searchTerm, selectedGroup]);
+
+  const openCreateModal = () => {
+    setEditingProduct(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (p: ProductWithStock) => {
+    setEditingProduct(p);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (p: ProductWithStock) => {
+    if (!window.confirm(`Xoá sản phẩm "${p.name}"?`)) return;
+    try {
+      const { error } = await deleteProduct(p.id as any);
+      if (error) throw error;
+      await fetchData();
+    } catch (e: any) {
+      console.error('[PRODUCTS] delete error', e);
+      alert('Không xoá được sản phẩm: ' + (e?.message ?? 'Unknown error'));
+    }
+  };
+
+  return (
+    <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
+      {/* Thanh tìm kiếm + filter nhóm + nút thêm */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+        <div className="w-full md:w-1/3">
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo Tên hoặc SKU..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+          />
+        </div>
+
+        <div className="flex gap-3 items-center w-full md:w-auto">
+          <select
+            value={selectedGroup}
+            onChange={(e) => setSelectedGroup(e.target.value)}
+            className="border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+          >
+            <option value="">Tất cả nhóm hàng</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={openCreateModal}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+          >
+            + Thêm sản phẩm
+          </button>
+        </div>
+      </div>
+
+      {/* Danh sách sản phẩm */}
+      {loading ? (
+        <p>Đang tải...</p>
+      ) : (
+        <>
+          {filteredProducts.length === 0 ? (
+            <p className="text-gray-500 mt-4">Chưa có sản phẩm nào.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left px-3 py-2">Nhóm sản phẩm</th>
+                    <th className="text-left px-3 py-2">Sản phẩm</th>
+                    <th className="text-left px-3 py-2">SKU</th>
+                    <th className="text-left px-3 py-2">ĐVT</th>
+                    <th className="text-right px-3 py-2">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProducts.map((p) => (
+                    <tr key={p.id} className="border-b hover:bg-gray-50">
+                      <td className="px-3 py-2">
+                        {groupName(p.group?.id)}
+                      </td>
+                      <td className="px-3 py-2">{p.name}</td>
+                      <td className="px-3 py-2">{p.sku}</td>
+                      <td className="px-3 py-2">{p.unit}</td>
+                      <td className="px-3 py-2 text-right space-x-2">
+                        <button
+                          onClick={() => openEditModal(p)}
+                          className="text-blue-600 hover:underline text-xs"
+                        >
+                          Sửa
+                        </button>
+                        <button
+                          onClick={() => handleDelete(p)}
+                          className="text-red-600 hover:underline text-xs"
+                        >
+                          Xoá
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Modal thêm / sửa */}
+      <ProductForm
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        productToEdit={editingProduct}
+        onSave={async () => {
+          await fetchData();
+        }}
+      />
+    </div>
+  );
 };
 
-
-
-    useEffect(() => {
-      listGroups().then(({ data }) => setGroups(data ?? []));
-        fetchData();
-    }, []);
-
-    const handleOpenCreateModal = () => {
-        setEditingProduct(null);
-        setIsModalOpen(true);
-    };
-
-    const handleOpenEditModal = (product: ProductWithStock) => {
-        setEditingProduct(product);
-        setIsModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setEditingProduct(null); // Also clear editing product on close
-    };
-const filteredProducts = useMemo(() => {
-  const term = (searchTerm || '').trim().toLowerCase();
-
-  return products.filter((p) => {
-    const matchesTerm =
-      !term ||
-      p.name?.toLowerCase().includes(term) ||
-      p.sku?.toLowerCase().includes(term);
-
-    const matchesGroup =
-      !selectedGroup || String(p.group?.id) === String(selectedGroup);
-
-    return matchesTerm && matchesGroup;
-  });
-}, [products, searchTerm, selectedGroup]);
-
-    return (
-        <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                <div className="relative w-full md:w-1/3">
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm theo Tên hoặc SKU..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                    <Icons.SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                </div>
-                <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                    <select
-                        value={selectedGroup}
-                        onChange={(e) => setSelectedGroup(e.target.value)}
-                        className="w-full md:w-auto px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    >
-                        <option value="">Tất cả nhóm hàng</option>
-                        {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                    </select>
-                     <button onClick={handleOpenCreateModal} className="w-full md:w-auto flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
-                        <Icons.PlusCircleIcon className="w-5 h-5 mr-2" />
-                        Thêm sản phẩm
-                    </button>
-                </div>
-            </div>
-
-           {loading ? (
-  <p>Đang tải...</p>
-) : (
-  <>
-    {!loading && products.length === 0 && (
-      <div className="text-center text-gray-500 py-6">
-        Chưa có sản phẩm nào.
-      </div>
-    )}
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th scope="col" className="px-2 py-3 md:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nhóm sản phẩm</th>
-                                <th scope="col" className="px-2 py-3 md:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sản phẩm</th>
-                                <th scope="col" className="px-2 py-3 md:px-6 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ĐVT</th>
-                                <th scope="col" className="px-2 py-3 md:px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thuộc tính / Phiên bản</th>
-                                <th scope="col" className="px-2 py-3 md:px-6 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredProducts.map((product) => {
-                                const isSimpleProduct = product.variants.length === 1 && 
-                                    !product.variants[0].color && 
-                                    !product.variants[0].size &&
-                                    (!product.variants[0].attributes || Object.keys(product.variants[0].attributes).length === 0);
-
-                                if (isSimpleProduct) {
-                                    const variant = product.variants[0];
-                                    return (
-                                        <tr key={product.id} className="hover:bg-gray-50">
-                                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-500">{groupName(product.group.id)}</div>
-                                            </td>
-                                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                                <div className="text-sm text-gray-500">[{product.sku}]</div>
-                                            </td>
-                                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 text-center">{product.unit}</td>
-                                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 text-center">--</td>
-                                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-center">
-                                                <button 
-                                                    onClick={() => handleOpenEditModal(product)} 
-                                                    className="p-2 text-primary-600 hover:text-primary-900 rounded-full hover:bg-primary-100 transition-colors"
-                                                    aria-label={`Sửa sản phẩm ${product.name}`}
-                                                >
-                                                    <Icons.EditIcon className="w-5 h-5"/>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                }
-
-                                return (
-                                    <React.Fragment key={product.id}>
-                                        {product.variants.map((variant, variantIdx) => (
-                                            <tr key={variant.id} className="hover:bg-gray-50">
-                                                {variantIdx === 0 && (
-                                                    <>
-                                                        <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap align-top" rowSpan={product.variants.length}>
-                                                            <div className="text-sm text-gray-500">{product.group.name}</div>
-                                                        </td>
-                                                        <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap align-top" rowSpan={product.variants.length}>
-                                                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                                            <div className="text-sm text-gray-500">[{product.sku}]</div>
-                                                        </td>
-                                                        <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap align-top text-center" rowSpan={product.variants.length}>
-                                                            <div className="text-sm text-gray-500">{product.unit}</div>
-                                                        </td>
-                                                    </>
-                                                )}
-                                                <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap">
-                                                    <div className="text-sm text-gray-900">{variant.variantSku}</div>
-                                                    <div className="text-sm text-gray-500">{[variant.color, variant.size].filter(Boolean).join(' - ')}</div>
-                                                </td>
-                                                {variantIdx === 0 && (
-                                                    <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap align-middle text-center" rowSpan={product.variants.length}>
-                                                         <button 
-                                                            onClick={() => handleOpenEditModal(product)} 
-                                                            className="p-2 text-primary-600 hover:text-primary-900 rounded-full hover:bg-primary-100 transition-colors"
-                                                            aria-label={`Sửa sản phẩm ${product.name}`}
-                                                         >
-                                                            <Icons.EditIcon className="w-5 h-5"/>
-                                                        </button>
-                                                    </td>
-                                                )}
-                                            </tr>
-                                        ))}
-                                    </React.Fragment>
-                                );
-                            })}
-                             {filteredProducts.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="text-center py-10 text-gray-500">Không tìm thấy sản phẩm nào.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-       </>
-            )}
-<ProductForm
-  isOpen={isModalOpen}
-  onClose={() => setIsModalOpen(false)}
-  productToEdit={editingProduct}
-  onSave={async () => { await fetchData(); }}   // chỉ refetch
-/>
-
-
-        </div>
-    );
-}
+export default Products;
