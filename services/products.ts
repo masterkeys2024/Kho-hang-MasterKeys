@@ -1,11 +1,12 @@
-// services/products.ts
 import { supabase } from '../lib/supabase';
 
 export type InsertProduct = {
   sku: string;
   name: string;
   unit?: string | null;
-  group_id?: number | null;
+  price?: number | null;
+  supplier_id?: string | null;
+  group_id?: string | null;    // uuid
   image_url?: string | null;
 };
 
@@ -13,9 +14,9 @@ export type InsertProduct = {
 export async function listProducts() {
   const { data, error } = await supabase
     .from('products')
-    // CHỈ những cột chắc chắn có trong DB
-    .select('id, sku, name, unit, group_id, image_url')
-    .order('id', { ascending: false });
+    // KHÔNG còn category
+    .select('id, sku, name, unit, price, created_at, supplier_id, group_id, image_url')
+    .order('created_at', { ascending: false });
 
   return { data, error };
 }
@@ -25,7 +26,7 @@ export async function createProduct(input: InsertProduct) {
   const { data, error } = await supabase
     .from('products')
     .insert(input)
-    .select('id, sku, name, unit, group_id, image_url')
+    .select('id, sku, name, unit, price, created_at, supplier_id, group_id, image_url')
     .single();
 
   return { data, error };
@@ -33,12 +34,14 @@ export async function createProduct(input: InsertProduct) {
 
 // Cập nhật sản phẩm
 export async function updateProduct(
-  id: string | number,
+  id: string,
   patch: {
     sku?: string;
     name?: string;
     unit?: string | null;
-    group_id?: number | null;
+    price?: number | null;
+    supplier_id?: string | null;
+    group_id?: string | null;
     image_url?: string | null;
   }
 ) {
@@ -46,14 +49,14 @@ export async function updateProduct(
     .from('products')
     .update(patch)
     .eq('id', id)
-    .select('id, sku, name, unit, group_id, image_url')
+    .select('id, sku, name, unit, price, created_at, supplier_id, group_id, image_url')
     .single();
 
   return { data, error };
 }
 
 // Xoá sản phẩm
-export async function deleteProduct(id: string | number) {
+export async function deleteProduct(id: string) {
   const { data, error } = await supabase
     .from('products')
     .delete()
