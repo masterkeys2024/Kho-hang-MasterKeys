@@ -6,12 +6,14 @@ export type InsertProduct = {
   name: string;
   unit?: string | null;
   group_id?: number | null;
+  image_url?: string | null;
 };
 
 // Lấy danh sách sản phẩm
 export async function listProducts() {
   const { data, error } = await supabase
     .from('products')
+    // CHỈ những cột chắc chắn có trong DB
     .select('id, sku, name, unit, group_id, image_url')
     .order('id', { ascending: false });
 
@@ -37,8 +39,6 @@ export async function updateProduct(
     name?: string;
     unit?: string | null;
     group_id?: number | null;
-    status?: string | null;
-    note?: string | null;
     image_url?: string | null;
   }
 ) {
