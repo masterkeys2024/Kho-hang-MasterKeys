@@ -12,7 +12,7 @@ export type InsertProduct = {
 export async function listProducts() {
   const { data, error } = await supabase
     .from('products')
-    .select('id, sku, name, unit, group_id, image_url, status, note, created_at, created_by')
+    .select('id, sku, name, unit, group_id, image_url')
     .order('id', { ascending: false });
 
   return { data, error };
@@ -23,7 +23,7 @@ export async function createProduct(input: InsertProduct) {
   const { data, error } = await supabase
     .from('products')
     .insert(input)
-    .select('id, sku, name, unit, group_id, image_url, status, note, created_at, created_by')
+    .select('id, sku, name, unit, group_id, image_url')
     .single();
 
   return { data, error };
@@ -46,7 +46,7 @@ export async function updateProduct(
     .from('products')
     .update(patch)
     .eq('id', id)
-    .select('id, sku, name, unit, group_id, image_url, status, note, created_at, created_by')
+    .select('id, sku, name, unit, group_id, image_url')
     .single();
 
   return { data, error };
