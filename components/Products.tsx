@@ -57,7 +57,7 @@ const fetchData = async () => {
       name: p.name,
       unit: p.unit ?? '',
       imageUrl: p.image_url ?? '',
-      group: { id: 0, name: 'Chưa phân nhóm' },
+      group: { id: p.group_id ?? 0, name: '' }, 
       variants: [{
         id: p.id,
         productId: p.id,
@@ -73,8 +73,7 @@ const fetchData = async () => {
     }));
 
     setProducts(normalized);
-    // Nhóm hàng: tạm để rỗng
-    setGroups([]);
+
   } catch (e: any) {
     console.error('[PRODUCTS] fetchData error', e);
     alert('Lỗi tải danh sách sản phẩm: ' + (e?.message ?? e));
