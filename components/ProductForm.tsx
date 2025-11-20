@@ -128,12 +128,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ isOpen, onClose, onSave, prod
   try {
     // Lấy dữ liệu từ state của form (đang có sẵn trong file của bạn)
     // tên state phổ biến: productSku, productName, unit ...
-    const payload = {
-      sku: (productSku || '').trim(),
-      name: (productName || '').trim(),
-      unit: (unit || '').trim() || null,
-      group_id: productGroupId || null,
-    };
+const payload = {
+  sku: (productSku || '').trim(),
+  name: (productName || '').trim(),
+  unit: (unit || '').trim() || null,
+  group_id: productGroupId ? Number(productGroupId) : null, 
+};
 
     if (!payload.sku || !payload.name) {
       setError('Vui lòng nhập SKU và Tên sản phẩm.');
