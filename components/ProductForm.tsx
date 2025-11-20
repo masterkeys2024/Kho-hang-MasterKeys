@@ -132,8 +132,9 @@ const payload = {
   sku: (productSku || '').trim(),
   name: (productName || '').trim(),
   unit: (unit || '').trim() || null,
-  group_id: productGroupId ? Number(productGroupId) : null, 
+  group_id: productGroupId || null,   // để nguyên string uuid
 };
+
 
     if (!payload.sku || !payload.name) {
       setError('Vui lòng nhập SKU và Tên sản phẩm.');
