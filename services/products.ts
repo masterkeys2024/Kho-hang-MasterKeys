@@ -20,7 +20,7 @@ export async function listProducts() {
     .select(
       'id, sku, name, unit, price, created_at, supplier_id, group_id, image_url'
     )
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
     .limit(1);
 
   return { data, error };
