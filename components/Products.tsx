@@ -20,47 +20,40 @@ const Products: React.FC = () => {
     return g?.name ?? '(nhóm đã xoá)';
   };
 
-  const fetchData = async () => {
+const fetchData = async () => {
     setLoading(true);
+    console.log('🚀 [DEBUG] Bắt đầu chạy fetchData');
+
     try {
-      console.log('[PRODUCTS] fetchData start');
+      // 1. Thử gọi Products trước
+      console.log('⏳ [DEBUG] Đang gọi listProducts()...');
+      const { data: products, error: err1 } = await listProducts();
+      
+      if (err1) {
+        console.error('❌ [DEBUG] Lỗi ở listProducts:', err1);
+        throw err1;
+      }
+      console.log('✅ [DEBUG] listProducts OK! Số lượng:', products?.length);
 
-      const [{ data: productRows, error: productError }, { data: groupRows, error: groupError }] =
-        await Promise.all([listProducts(), listGroups()]);
+      // 2. Thử gọi Groups sau
+      console.log('⏳ [DEBUG] Đang gọi listGroups()...');
+      const { data: groups, error: err2 } = await listGroups();
 
-      if (productError) throw productError;
-      if (groupError) throw groupError;
+      if (err2) {
+         console.error('❌ [DEBUG] Lỗi ở listGroups:', err2);
+         throw err2;
+      }
+      console.log('✅ [DEBUG] listGroups OK! Số lượng:', groups?.length);
 
-      const normalized: ProductWithStock[] = (productRows ?? []).map((p: any) => ({
-        id: p.id, // uuid trả về từ Supabase
-        sku: p.sku,
-        name: p.name,
-        unit: p.unit ?? '',
-        imageUrl: p.image_url ?? '',
-        group: p.group_id
-          ? { id: p.group_id, name: '' }
-          : { id: 0, name: 'Chưa phân nhóm' },
-        variants: [
-          {
-            id: p.id,
-            productId: p.id,
-            variantSku: p.sku,
-            attributes: {},
-            thresholds: {},
-            totalStock: 0,
-          },
-        ],
-      }));
+      // 3. Nếu cả 2 đều qua được thì xử lý data như cũ
+      // (Copy đoạn code xử lý normalized của bạn vào đây nếu muốn test hiển thị)
+      
+      // Tạm thời alert ra để biết là đã thành công
+      alert("Đã tải xong dữ liệu! Kiểm tra Console.");
 
-      setProducts(normalized);
-      setGroups(groupRows ?? []);
-      console.log('[PRODUCTS] resp', {
-        rows: normalized.length,
-        sample: normalized[0],
-      });
     } catch (e: any) {
-      console.error('[PRODUCTS] fetchData error', e);
-      alert('Lỗi tải danh sách sản phẩm: ' + (e?.message ?? 'Unknown error'));
+      console.error('💥 [DEBUG] Lỗi nghiêm trọng:', e);
+      alert('Lỗi: ' + e.message);
     } finally {
       setLoading(false);
     }
