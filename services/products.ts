@@ -11,6 +11,8 @@ export type InsertProduct = {
   image_url?: string | null;
 };
 
+console.log('SUPABASE CLIENT STATUS:', supabase);
+
 // Lấy danh sách sản phẩm
 export async function listProducts() {
   const { data, error } = await supabase
