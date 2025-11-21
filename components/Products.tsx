@@ -20,7 +20,6 @@ const Products: React.FC = () => {
     return g?.name ?? '(nhóm đã xoá)';
   };
 
-  // Load dữ liệu
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -33,7 +32,7 @@ const Products: React.FC = () => {
       if (groupError) throw groupError;
 
       const normalized: ProductWithStock[] = (productRows ?? []).map((p: any) => ({
-        id: p.id,
+        id: p.id, // uuid trả về từ Supabase
         sku: p.sku,
         name: p.name,
         unit: p.unit ?? '',
@@ -41,7 +40,6 @@ const Products: React.FC = () => {
         group: p.group_id
           ? { id: p.group_id, name: '' }
           : { id: 0, name: 'Chưa phân nhóm' },
-        // variants tối thiểu để type không lỗi
         variants: [
           {
             id: p.id,
@@ -49,7 +47,7 @@ const Products: React.FC = () => {
             variantSku: p.sku,
             attributes: {},
             thresholds: {},
-            totalStock: p.totalStock ?? 0,
+            totalStock: 0,
           },
         ],
       }));
@@ -64,7 +62,6 @@ const Products: React.FC = () => {
       console.error('[PRODUCTS] fetchData error', e);
       alert('Lỗi tải danh sách sản phẩm: ' + (e?.message ?? 'Unknown error'));
     } finally {
-      // QUAN TRỌNG: luôn tắt loading, nên không thể kẹt ở "Đang tải..."
       setLoading(false);
     }
   };
@@ -73,7 +70,6 @@ const Products: React.FC = () => {
     fetchData();
   }, []);
 
-  // Lọc theo tìm kiếm + nhóm
   const filteredProducts = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return products.filter((p) => {
@@ -102,7 +98,7 @@ const Products: React.FC = () => {
   const handleDelete = async (p: ProductWithStock) => {
     if (!window.confirm(`Xoá sản phẩm "${p.name}"?`)) return;
     try {
-      const { error } = await deleteProduct(p.id as any);
+      const { error } = await deleteProduct(String(p.id));
       if (error) throw error;
       await fetchData();
     } catch (e: any) {
