@@ -137,8 +137,10 @@ const logout = async () => {
   await supabase.auth.signOut();
   localStorage.removeItem('user');
   setUser(null);
-  window.location.hash = '/login';
+  // Không cần tự đổi hash, để router tự điều hướng:
+  // route "*" sẽ Navigate về /login
 };
+
 
 
   const hasPermission = useCallback((requiredRoles: Role[]) => {
@@ -405,7 +407,6 @@ const MainApp: React.FC = () => {
     if (!user) {
         return (
             <Routes>
-                <Route path="/login" element={<Login />} />
                 <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
         );
