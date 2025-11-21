@@ -407,6 +407,7 @@ const MainApp: React.FC = () => {
     if (!user) {
         return (
             <Routes>
+                <Route path="/login" element={<Navigate to="/" />} />
                 <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
         );
