@@ -6,7 +6,7 @@ export async function listGroups() {
   return await supabase
     .from('product_groups')
     .select('id, name, parent_id')
-    .order('name', { ascending: true });
+    .order('name', { ascending: true })
     .limit(1);
 }
 
