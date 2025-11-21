@@ -1,6 +1,7 @@
 // src/services/productGroups.ts
 import { supabase } from '../lib/supabase';
 
+// Lấy danh sách nhóm sản phẩm
 export async function listGroups() {
   return await supabase
     .from('product_groups')
@@ -8,6 +9,7 @@ export async function listGroups() {
     .order('name', { ascending: true });
 }
 
+// Tạo nhóm mới
 export async function createGroup(name: string, parent_id?: string | null) {
   return await supabase
     .from('product_groups')
@@ -16,7 +18,11 @@ export async function createGroup(name: string, parent_id?: string | null) {
     .single();
 }
 
-export async function updateGroup(id: string, patch: { name?: string; parent_id?: string | null }) {
+// Cập nhật nhóm
+export async function updateGroup(
+  id: string,
+  patch: { name?: string; parent_id?: string | null }
+) {
   return await supabase
     .from('product_groups')
     .update(patch)
@@ -25,6 +31,7 @@ export async function updateGroup(id: string, patch: { name?: string; parent_id?
     .single();
 }
 
+// Xoá nhóm
 export async function deleteGroup(id: string) {
   return await supabase
     .from('product_groups')
