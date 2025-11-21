@@ -7,6 +7,7 @@ export async function listGroups() {
     .from('product_groups')
     .select('id, name, parent_id')
     .order('name', { ascending: true });
+    .limit(1);
 }
 
 // Tạo nhóm mới
