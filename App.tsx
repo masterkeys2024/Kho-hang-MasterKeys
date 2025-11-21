@@ -137,9 +137,9 @@ const logout = async () => {
   await supabase.auth.signOut();
   localStorage.removeItem('user');
   setUser(null);
-  // Không cần tự đổi hash, để router tự điều hướng:
-  // route "*" sẽ Navigate về /login
+  window.location.hash = '/login';
 };
+
 
 
 
